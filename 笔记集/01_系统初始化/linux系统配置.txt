@@ -1,7 +1,11 @@
+linux 系统配置
+
+系统 centoOS 网卡桥接
+
 临时修改当前IP地址
 ifconfig eth0 192.168.1.200
 
-centoOS 配置网络 连接外网
+配置网络 连接外网
 
 vi /etc/sysconfig/network-scripts/ifcfg-eth0
 DEVICE=eth0
@@ -27,7 +31,7 @@ vi /etc/sysconfig/network
 NETWORKING=yes
 GATEWAY=192.168.1.1
 
-网卡桥接
+
 service network restart
 
 设置HOSTNAME
@@ -44,10 +48,17 @@ crontab -l >/tmp/crontab.bak
 echo "*/10 * * * * /usr/sbin/ntpdate pool.ntp.org | logger -t NTP" >> /tmp/crontab.bak
 crontab /tmp/crontab.bak
 
+crontab -l
+*/10 * * * * /usr/sbin/ntpdate pool.ntp.org | logger -t NTP
+
+ntpdate pool.ntp.org
+
 CentOS关掉防火墙以及selinux 
 /etc/init.d/iptables stop
 永久关闭:
 chkconfig --level 35 iptables off
+检查防火墙
+chkconfig  --list | grep ip 
 
 永久关闭SELinux
 vi /etc/selinux/config
