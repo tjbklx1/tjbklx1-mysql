@@ -1,0 +1,22 @@
+service启动过程
+service mysqld start
+service mysqld stop
+
+init.d启动过程
+/etc/init.d/mysqld start
+/etc/init.d/mysqld stop
+
+
+mysqld_safe 启动过程
+/usr/local/mysql/bin/mysqld_safe --defaults-file=/etc/my.cnf &
+mysqladmin -S /tmp/mysql_3306.sock shutdown 
+
+
+mysqld启动
+/usr/local/mysql/bin/mysqld --defaults-file=/etc/my.cnf &
+mysqladmin -S /tmp/mysql_3306.sock shutdown 
+mysqladmin -S /tmp/mysql_3306.sock  -uroot -p shutdown  
+
+tail -500 error.log
+show database;
+show processlist;

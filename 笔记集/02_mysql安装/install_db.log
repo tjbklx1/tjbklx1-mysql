@@ -1,0 +1,71 @@
+Installing MySQL system tables...OK
+
+Filling help tables...OK
+
+To start mysqld at boot time you have to copy
+support-files/mysql.server to the right place for your system
+
+PLEASE REMEMBER TO SET A PASSWORD FOR THE MySQL root USER !
+To do so, start the server, then issue the following commands:
+
+  /usr/local/mysql/bin/mysqladmin -u root password 'new-password'
+  /usr/local/mysql/bin/mysqladmin -u root -h my01 password 'new-password'
+
+Alternatively you can run:
+
+  /usr/local/mysql/bin/mysql_secure_installation
+
+which will also give you the option of removing the test
+databases and anonymous user created by default.  This is
+strongly recommended for production servers.
+
+See the manual for more instructions.
+
+You can start the MySQL daemon with:
+
+  cd . ; /usr/local/mysql/bin/mysqld_safe &
+
+You can test the MySQL daemon with mysql-test-run.pl
+
+  cd mysql-test ; perl mysql-test-run.pl
+
+Please report any problems at http://bugs.mysql.com/
+
+The latest information about MySQL is available on the web at
+
+  http://www.mysql.com
+
+Support MySQL by buying support/licenses at http://shop.mysql.com
+
+WARNING: Found existing config file ./my.cnf on the system.
+Because this file might be in use, it was not replaced,
+but was used in bootstrap (unless you used --defaults-file)
+and when you later start the server.
+The new default config file was created as ./my-new.cnf,
+please compare it with your file and take the changes you need.
+
+WARNING: Default config file /etc/my.cnf exists on the system
+This file will be read by default by the MySQL server
+If you do not want to use this, either remove it, or use the
+--defaults-file argument to mysqld_safe when starting the server
+
+[root@my01 mysql]# cd -
+/data/mysql/mysql_3306
+[root@my01 mysql_3306]# ls -l
+total 1324
+drwxr-xr-x 5 mysql mysql    4096 Jun 19 12:38 data
+drwxr-xr-x 2 mysql mysql    4096 Jun 19 12:32 logs
+-rw-rw---- 1 mysql mysql   67257 Jun 19 12:38 logs.000001
+-rw-rw---- 1 mysql mysql 1266359 Jun 19 12:38 logs.000002
+-rw-rw---- 1 mysql mysql      70 Jun 19 12:38 logs.index
+drwxr-xr-x 2 mysql mysql    4096 Jun 19 12:38 tmp
+[root@my01 mysql_3306]# ls -l data/
+total 2584604
+-rw-rw---- 1 mysql mysql       4442 Jun 19 12:38 error.log
+-rw-rw---- 1 mysql mysql 1073741824 Jun 19 12:38 ibdata1
+-rw-rw---- 1 mysql mysql  524288000 Jun 19 12:38 ib_logfile0
+-rw-rw---- 1 mysql mysql  524288000 Jun 19 12:38 ib_logfile1
+-rw-rw---- 1 mysql mysql  524288000 Jun 19 12:38 ib_logfile2
+drwx------ 2 mysql mysql       4096 Jun 19 12:38 mysql
+drwx------ 2 mysql mysql       4096 Jun 19 12:38 performance_schema
+drwx------ 2 mysql mysql       4096 Jun 19 12:38 test

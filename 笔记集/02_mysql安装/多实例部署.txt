@@ -1,0 +1,42 @@
+¶àÊµÀý²¿Êð
+
+[mysqld_multi]
+mysqld=/usr/local/mysql/bin/mysqld
+mysqladmin=/usr/local/mysql/bin/mysqladmin
+log=/tmp/mysqld_multi.log
+
+[mysqld3306]
+port=3306
+socket=/tmp/mysql_3306.sock
+server-id=2033306
+datadir=/data/mysql/mysql_3306
+log-bin=/data/mysql/mysql_3306
+
+[mysqld3307]
+port=3307
+socket=/tmp/mysql_3307.sock
+server-id=2033307
+datadir=/data/mysql/mysql_3307
+log-bin=/data/mysql/mysql_3307
+
+[root@myserver mysql_3307]# /usr/local/mysql/bin/mysqld_multi start
+[root@myserver mysql_3307]# tail -20 /tmp/mysqld_multi.log 
+Starting MySQL servers
+
+[root@myserver mysql_3307]# /usr/local/mysql/bin/mysqld_multi report
+
+[root@myserver mysql_3307]# ps -ef | grep mysql
+mysql    25237     1  1 10:54 pts/0    00:00:00 /usr/local/mysql/bin/mysqld --port=3306 --socket=/tmp/mysql_3306.sock --server-id=2033306 --datadir=/data/mysql/mysql_3306 --log-bin=/data/mysql/mysql_3306
+mysql    25240     1  1 10:54 pts/0    00:00:00 /usr/local/mysql/bin/mysqld --port=3307 --socket=/tmp/mysql_3307.sock --server-id=2033307 --datadir=/data/mysql/mysql_3307 --log-bin=/data/mysql/mysql_3307
+root     25296 23033  0 10:55 pts/0    00:00:00 grep mysql
+
+[root@myserver mysql_3307]# netstat -anlp | grep 3306
+tcp        0      0 :::3306                     :::*                        LISTEN      25237/mysqld        
+unix  2      [ ACC ]     STREAM     LISTENING     58781  25237/mysqld        /tmp/mysql_3306.sock
+
+[root@myserver mysql_3307]# netstat -anlp | grep 3307
+tcp        0      0 :::3307                     :::*                        LISTEN      25240/mysqld        
+unix  2      [ ACC ]     STREAM     LISTENING     58777  25240/mysqld        /tmp/mysql_3307.sock
+
+
+

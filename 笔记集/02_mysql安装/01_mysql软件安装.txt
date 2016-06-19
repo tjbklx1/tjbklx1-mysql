@@ -1,0 +1,122 @@
+mysql软件安装
+
+一,注意事项:
+1.依赖包 perl
+
+二,安装过程
+1,上传软件 mysql-advanced-5.6.23-linux-glibc2.5-x86_64.tar.gz
+
+2,解压
+mkdir /opt/mysql
+cd /opt/mysql
+tar -xzvf /root/mysql-advanced-5.6.23-linux-glibc2.5-x86_64.tar.gz
+
+3,软连接
+cd /usr/local
+ln -s /opt/mysql/mysql-advanced-5.6.23-linux-glibc2.5-x86_64/ mysql
+
+[root@my01 local]# ls -l
+total 40
+drwxr-xr-x. 2 root root 4096 Sep 23  2011 bin
+drwxr-xr-x. 2 root root 4096 Sep 23  2011 etc
+drwxr-xr-x. 2 root root 4096 Sep 23  2011 games
+drwxr-xr-x. 2 root root 4096 Sep 23  2011 include
+drwxr-xr-x. 2 root root 4096 Sep 23  2011 lib
+drwxr-xr-x. 2 root root 4096 Sep 23  2011 lib64
+drwxr-xr-x. 2 root root 4096 Sep 23  2011 libexec
+lrwxrwxrwx  1 root root   55 Jun 19 10:58 mysql -> /opt/mysql/mysql-advanced-5.6.23-linux-glibc2.5-x86_64/
+drwxr-xr-x. 2 root root 4096 Sep 23  2011 sbin
+drwxr-xr-x. 5 root root 4096 Jun 19 10:20 share
+drwxr-xr-x. 2 root root 4096 Sep 23  2011 src
+[root@my01 local]# cd /usr/local/mysql/
+[root@my01 mysql]# ls -l
+total 156
+drwxr-xr-x  2 root root    4096 Jun 19 10:55 bin
+drwxr-xr-x  3 root root    4096 Jun 19 10:56 data
+drwxr-xr-x  2 root root    4096 Jun 19 10:56 docs
+drwxr-xr-x  3 root root    4096 Jun 19 10:56 include
+-rw-r--r--  1 7161 wheel 102509 Jan 29  2015 INSTALL-BINARY
+drwxr-xr-x  3 root root    4096 Jun 19 10:55 lib
+-rw-r--r--  1 7161 wheel   2729 Jan 29  2015 LICENSE.mysql
+drwxr-xr-x  4 root root    4096 Jun 19 10:55 man
+drwxr-xr-x 10 root root    4096 Jun 19 10:56 mysql-test
+-rw-r--r--  1 7161 wheel   1449 Jan 29  2015 README
+drwxr-xr-x  2 root root    4096 Jun 19 10:56 scripts
+drwxr-xr-x 28 root root    4096 Jun 19 10:55 share
+drwxr-xr-x  4 root root    4096 Jun 19 10:56 sql-bench
+drwxr-xr-x  2 root root    4096 Jun 19 10:56 support-files
+
+4,添加环境变量
+echo "export PATH=$PATH:/usr/local/mysql/bin" >> /etc/profile && source /etc/profile 
+echo $PATH
+
+5,创建mysql用户
+groupadd mysql
+
+注意 : 创建用户,mysql不建议启用shell
+建用户的两种方式
+#useradd mysql -g mysql -d /data/mysql -s /dev/null
+useradd -r -g mysql -s /sbin/nologin mysql
+
+6,修改mysq软件目录的权限
+cd /usr/local/
+chown -R mysql:mysql mysql 
+chown -R mysql:mysql mysql/*
+
+7,创建目录并修改权限,并配置my.cnf
+mkdir -p /data/mysql/mysql_3306/
+cd /data/mysql/mysql_3306/
+mkdir data logs tmp
+
+datadir = /data/mysql/mysql_3306/data 
+log-bin=/data/mysql/mysql_3306/logs 
+tmpdir=/data/mysql/mysql_3306/tmp 
+
+chown mysql:mysql /data/mysql/
+chown -R mysql:mysql /data/mysql/*
+
+/etc/my.cnf 具体查看my.cnf文件
+vi /data/mysql/mysql_3306/my.cnf
+cp /data/mysql/mysql_3306/my.cnf /etc 
+chown -R mysql:mysql /etc/my.cnf
+chown -R mysql:mysql /data/mysql/mysql_3306/my.cnf
+
+注意主要参数的配置项
+
+8,初始化数据库
+这个步骤依赖系统包Perl
+#cd /usr/local/mysql && ./script/mysql_db_install
+cd /usr/local/mysql
+#./scripts/mysql_install_db --user=mysql --datadir=/data/mysql/mysql_3306/data
+#./scripts/mysql_install_db --basedir=/usr/local/mysql --no-defaults --skip-name-resolve --user=mysql --datadir=/data/mysql/mysql_3306/data 
+./scripts/mysql_install_db --user=mysql --datadir=/data/mysql/mysql_3306/data --defaults-file=/etc/my.cnf
+
+9,添加服务
+cd /usr/local/mysql  
+cp support-files/mysql.server /etc/init.d/mysql 
+
+10,启动停止数据库
+/etc/init.d/mysql start
+
+11,加入开机启动项
+chkconfig -add mysqld
+查看开机启动设置是否成功
+chkconfig --list | grep mysql*
+
+
+三,可能出问题,或者是需要注意的步骤:
+/etc/my.cnf   参数配置
+
+/data/mysql/mysql3306/{data, logs, tmp} 权限
+datadir = /data/mysql/mysql3306/data
+log-bin=/data/mysql/mysql3306/logs
+tmpdir=/data/mysql/mysql3306/tmp 
+
+cd /usr/local/mysql && ./script/mysql_db_install  
+fill ok  要看到两个OK
+
+出错了,看错误日志 , 错误日志在哪呢？ 
+默认是在datadir/`hostname`.err ,
+也可以用my.cnf : log-error = error.log  
+datadir  
+

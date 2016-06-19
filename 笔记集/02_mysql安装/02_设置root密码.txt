@@ -1,0 +1,23 @@
+设置root密码
+mysql -S /tmp/mysql_3306.sock 
+use mysql;
+UPDATE user SET password=PASSWORD("000000") WHERE user='root';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY '000000' WITH GRANT OPTION;
+FLUSH PRIVILEGES;
+exit
+
+无用的帐号清理
+
+delete from mysql.user where user!='root' or host!='localhost';
+flush privileges;
+
+select user,host ,password from mysql.user;
++------+-----------+-------------------------------------------+
+| user | host      | password                                  |
++------+-----------+-------------------------------------------+
+| root | localhost | *032197AE5731D4664921A6CCAC7CFCE6A0698693 |
++------+-----------+-------------------------------------------+
+1 row in set (0.00 sec)
+
+truncate mysql.db;
+drop database test;
