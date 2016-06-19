@@ -1,0 +1,56 @@
+临时修改当前IP地址
+ifconfig eth0 192.168.1.200
+
+centoOS 配置网络 连接外网
+
+vi /etc/sysconfig/network-scripts/ifcfg-eth0
+DEVICE=eth0
+HWADDR=08:00:27:EC:9A:D4
+TYPE=Ethernet
+UUID=b9656ea1-7f88-48fe-ac45-8c5a29cfc833
+ONBOOT=yes
+NM_CONTROLLED=no
+BOOTPROTO=none
+IPADDR=192.168.1.200
+NETMASK=255.255.255.0
+NETWORK=192.168.1.0
+GATEWAY=192.168.1.1
+PEERDNS=yes
+BROADCAST=192.168.1.255
+IPV6INT=yes
+
+vi /etc/resolv.conf
+nameserver 116.228.111.118
+nameserver 192.168.1.1
+
+vi /etc/sysconfig/network
+NETWORKING=yes
+GATEWAY=192.168.1.1
+
+网卡桥接
+service network restart
+
+设置HOSTNAME
+vi /etc/hosts
+192.168.1.200 my01
+
+vi /etc/sysconfig/network
+HOSTNAME=my01
+
+同步时间
+yum install -y perl
+yum install -y ntp
+crontab -l >/tmp/crontab.bak
+echo "*/10 * * * * /usr/sbin/ntpdate pool.ntp.org | logger -t NTP" >> /tmp/crontab.bak
+crontab /tmp/crontab.bak
+
+CentOS关掉防火墙以及selinux 
+/etc/init.d/iptables stop
+永久关闭:
+chkconfig --level 35 iptables off
+
+永久关闭SELinux
+vi /etc/selinux/config
+SELINUX=disabled
+
+重启系统。
