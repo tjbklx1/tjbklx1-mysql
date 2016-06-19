@@ -1,0 +1,19 @@
+xtrabackup °²×°
+
+yum install -y perl-DBI perl-DBD-MySQL perl-Time-HiRes perl-IO-Socket-SSL
+
+tar -xzvf percona-xtrabackup-2.1.9-744-Linux-x86_64.tar.gz
+mv percona-xtrabackup-2.1.9-Linux-x86_64/ xtrabackup
+mv xtrabackup/ /usr/local
+chown -R mysql:mysql /usr/local/xtrabackup/
+
+su - mysql
+echo "export PATH=\$PATH:\$MYSQL_HOME/bin:/usr/local/xtrabackup/bin" >>/home/mysql/.bash_profile
+source .bash_profile
+
+/data/3306/connect.sh
+use mysql
+create user xtrabk@'localhost' identified by 'xtrabk';
+grant reload,lock tables,Replication client,super on *.* to xtrabk@'localhost';
+FLUSH PRIVILEGES;
+exit
