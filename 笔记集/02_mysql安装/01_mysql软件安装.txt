@@ -94,6 +94,7 @@ cd /usr/local/mysql
 9,添加服务
 cd /usr/local/mysql  
 cp support-files/mysql.server /etc/init.d/mysql 
+cp support-files/mysql.server /etc/rc.d/init.d/mysqld
 
 10,启动停止数据库
 /etc/init.d/mysql start
@@ -107,10 +108,10 @@ chkconfig --list | grep mysql*
 三,可能出问题,或者是需要注意的步骤:
 /etc/my.cnf   参数配置
 
-/data/mysql/mysql3306/{data, logs, tmp} 权限
-datadir = /data/mysql/mysql3306/data
-log-bin=/data/mysql/mysql3306/logs
-tmpdir=/data/mysql/mysql3306/tmp 
+/data/mysql/mysql_3306/{data, logs, tmp} 权限
+datadir = /data/mysql/mysql_3306/data
+log-bin=/data/mysql/mysql_3306/logs
+tmpdir=/data/mysql/mysql_3306/tmp 
 
 cd /usr/local/mysql && ./script/mysql_db_install  
 fill ok  要看到两个OK
