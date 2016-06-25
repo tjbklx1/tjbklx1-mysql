@@ -1,0 +1,156 @@
+传统的双主复制 
+
+接上文 主从复制
+
+
+注意事项:
+master:
+log-bin=
+server-id=2003307
+gtid_mode=off 
+relay-log=/data/3307/relaylog/relay-bin
+relay-log-index=/data/3307/relaylog/relay-bin.index
+
+slave 
+master:
+log-bin=
+server-id=2013307
+gtid_mode=off 
+relay-log=/data/3307/relaylog/relay-bin
+relay-log-index=/data/3307/relaylog/relay-bin.index
+
+relay-log的目录 和权限
+
+
+
+规划
+传统的复制 :基于binlog方式的双主复制
+192.168.1.200:3307  master01 /data/mysql/mysql_3307/  
+129.184.1.201:3307  master02  /data/mysql/mysql_3307/
+
+这次是从201 到 200 复制数据
+
+实验:
+
+
+搭建双主复制
+
+检查参数文件并修改参数文件:
+
+cat /data/mysql/mysql_3307/my.cnf | grep server-id
+cat /data/mysql/mysql_3307/my.cnf | grep log-bin
+cat /data/mysql/mysql_3307/my.cnf | grep relay-log
+cat /data/mysql/mysql_3307/my.cnf | grep relay-log-index
+
+master01 
+log-bin=log-bin = /data/mysql/mysql_3307/logs
+server-id=2003307
+relay-log=/data/mysql/mysql_3307/relaylog/relay-bin
+relay-log-index=/data/mysql/mysql_3307/relaylog/relay-bin.index
+
+mkdir /data/mysql/mysql_3307/relaylog/
+chown mysql:mysql /data/mysql/mysql_3307/relaylog/
+
+master02:
+log-bin=log-bin = /data/mysql/mysql_3307/logs
+server-id=2013307
+relay-log=/data/mysql/mysql_3307/relaylog/relay-bin
+relay-log-index=/data/mysql/mysql_3307/relaylog/relay-bin.index
+
+mkdir /data/mysql/mysql_3307/relaylog/
+chown mysql:mysql /data/mysql/mysql_3307/relaylog/
+
+配置主从
+
+master02 :
+启动主库 
+/usr/local/mysql/bin/mysqld --defaults-file=/data/mysql/mysql_3307/my.cnf &
+mysql -S /tmp/mysql_3307.sock 
+show master status ;
++-------------+----------+--------------+------------------+-------------------+
+| File        | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++-------------+----------+--------------+------------------+-------------------+
+| logs.000005 |      205 |              |                  |                   |
++-------------+----------+--------------+------------------+-------------------+
+
+use mysql;
+
+注意 从库在change master 时 要先查询一下 复制用户是否存在
+在多级复制,或者主从复制时,有时这个用户被从master同步到slave,
+所以在slave向其他地方同步时不需要再去创建这个用户了
+select user,host ,password from mysql.user;
+
+GRANT REPLICATION SLAVE ON *.* to 'repl'@'%' identified by 'mysql';
+FLUSH PRIVILEGES;
+exit
+
+
+master01
+启动从库 
+/usr/local/mysql/bin/mysqld --defaults-file=/data/mysql/mysql_3307/my.cnf &
+mysql -S /tmp/mysql_3307.sock 
+change master to master_host='192.168.1.201',master_port=3307, master_user='repl', master_password='mysql', master_log_file='logs.000005', master_log_pos=205; 
+
+start slave;
+show slave status\G
+
+*************************** 1. row ***************************
+               Slave_IO_State: Waiting for master to send event
+                  Master_Host: 192.168.1.201
+                  Master_User: repl
+                  Master_Port: 3307
+                Connect_Retry: 60
+              Master_Log_File: logs.000005
+          Read_Master_Log_Pos: 492
+               Relay_Log_File: relay-bin.000002
+                Relay_Log_Pos: 565
+        Relay_Master_Log_File: logs.000005
+             Slave_IO_Running: Yes
+            Slave_SQL_Running: Yes
+              Replicate_Do_DB: 
+          Replicate_Ignore_DB: 
+           Replicate_Do_Table: 
+       Replicate_Ignore_Table: 
+      Replicate_Wild_Do_Table: 
+  Replicate_Wild_Ignore_Table: 
+                   Last_Errno: 0
+                   Last_Error: 
+                 Skip_Counter: 0
+          Exec_Master_Log_Pos: 492
+              Relay_Log_Space: 732
+              Until_Condition: None
+               Until_Log_File: 
+                Until_Log_Pos: 0
+           Master_SSL_Allowed: No
+           Master_SSL_CA_File: 
+           Master_SSL_CA_Path: 
+              Master_SSL_Cert: 
+            Master_SSL_Cipher: 
+               Master_SSL_Key: 
+        Seconds_Behind_Master: 0
+Master_SSL_Verify_Server_Cert: No
+                Last_IO_Errno: 0
+                Last_IO_Error: 
+               Last_SQL_Errno: 0
+               Last_SQL_Error: 
+  Replicate_Ignore_Server_Ids: 
+             Master_Server_Id: 2013307
+                  Master_UUID: 66e3b540-35ea-11e6-b26e-080027f4f9c4
+             Master_Info_File: /data/mysql/mysql_3307/data/master.info
+                    SQL_Delay: 0
+          SQL_Remaining_Delay: NULL
+      Slave_SQL_Running_State: Slave has read all relay log; waiting for the slave I/O thread to update it
+           Master_Retry_Count: 86400
+                  Master_Bind: 
+      Last_IO_Error_Timestamp: 
+     Last_SQL_Error_Timestamp: 
+               Master_SSL_Crl: 
+           Master_SSL_Crlpath: 
+           Retrieved_Gtid_Set: 
+            Executed_Gtid_Set: 
+                Auto_Position: 0
+1 row in set (0.00 sec)
+
+
+双主复制ok
+插入一些测试数据 测试同步的状态

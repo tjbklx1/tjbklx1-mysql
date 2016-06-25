@@ -1,0 +1,125 @@
+keepalived dual master 
+实现双主 IP自动漂移
+
+前期工作参考 主从复制,双主复制
+
+遇到问题查看日志
+tail -50 /var/log/messages 
+
+
+
+[root@my01 ~]# modprobe -l | grep ipvs
+kernel/net/netfilter/ipvs/ip_vs.ko
+kernel/net/netfilter/ipvs/ip_vs_rr.ko
+kernel/net/netfilter/ipvs/ip_vs_wrr.ko
+kernel/net/netfilter/ipvs/ip_vs_lc.ko
+kernel/net/netfilter/ipvs/ip_vs_wlc.ko
+kernel/net/netfilter/ipvs/ip_vs_lblc.ko
+kernel/net/netfilter/ipvs/ip_vs_lblcr.ko
+kernel/net/netfilter/ipvs/ip_vs_dh.ko
+kernel/net/netfilter/ipvs/ip_vs_sh.ko
+kernel/net/netfilter/ipvs/ip_vs_sed.ko
+kernel/net/netfilter/ipvs/ip_vs_nq.ko
+kernel/net/netfilter/ipvs/ip_vs_ftp.ko
+kernel/net/netfilter/ipvs/ip_vs_pe_sip.ko
+
+
+
+两端都要执行
+
+yum install -y gcc  kernel openssl-devel kernel-headers kernel-devel popt popt-devel popt-static libnl libnl-devel
+
+[root@my01 ~]# ls -l /usr/src/kernels/
+total 4
+drwxr-xr-x 22 root root 4096 Jun 25 10:41 2.6.32-642.1.1.el6.x86_64
+[root@localhost ipvsadm-1.24]# ln -s /usr/src/kernels/2.6.32-642.1.1.el6.x86_64  /usr/src/linux 
+
+
+检查相关的内核参数
+HAProxy+Keepalived架构需要注意的内核参数有：
+# Controls IP packet forwarding
+net.ipv4.ip_forward = 1
+开启IP转发功能
+net.ipv4.ip_nonlocal_bind = 1
+开启允许绑定非本机的IP
+如果使用LVS的DR或者TUN模式结合Keepalived需要在后端真实服务器上特别设置两个arp相关的参数。这里也设置好。
+net.ipv4.conf.lo.arp_ignore = 1
+net.ipv4.conf.lo.arp_announce = 2
+net.ipv4.conf.all.arp_ignore = 1
+net.ipv4.conf.all.arp_announce = 2
+
+
+
+两端都要修改参数
+修改参数:
+vi /etc/sysctl.conf
+net.ipv4.ip_forward = 1
+net.ipv4.ip_nonlocal_bind = 1
+
+net.ipv4.conf.lo.arp_ignore = 1
+net.ipv4.conf.lo.arp_announce = 2
+net.ipv4.conf.all.arp_ignore = 1
+net.ipv4.conf.all.arp_announce = 2
+
+sysctl -p
+
+两边安装keepalived
+yum list | grep keepalived
+
+tar -xzvf keepalived-1.2.1.tar.gz  
+cd keepalived-1.2.1
+./configure --prefix=/usr/local/keepalived --with-kernel-dir=/usr/src/kernels/2.6.18-194.el5-x86_64/
+make
+make install
+cp /usr/local/keepalived/sbin/keepalived /usr/bin/
+cp /usr/local/keepalived/etc/rc.d/init.d/keepalived /etc/init.d/
+cp /usr/local/keepalived/etc/sysconfig/keepalived /etc/sysconfig/
+主节点
+mkdir /etc/keepalived
+vi /etc/keepalived/keepalived.conf
+
+yum install -y keepalived 
+
+[root@my01 mysql_3307]# rpm -ql | grep keepalived
+rpm: no arguments given for query
+[root@my01 mysql_3307]# rpm -ql  keepalived
+
+编写配置文件,授权
+
+
+两端启动
+service keepalived start
+
+[root@my01 keepalived]# ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue state UNKNOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 08:00:27:e0:82:f2 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.200/24 brd 192.168.1.255 scope global eth0
+    inet 192.168.1.202/32 scope global eth0
+    inet6 fe80::a00:27ff:fee0:82f2/64 scope link 
+       valid_lft forever preferred_lft forever
+
+[root@my02 keepalived]# ip addr
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 16436 qdisc noqueue state UNKNOWN 
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP qlen 1000
+    link/ether 08:00:27:f4:f9:c4 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.1.201/24 brd 192.168.1.255 scope global eth0
+    inet6 fe80::a00:27ff:fef4:f9c4/64 scope link 
+       valid_lft forever preferred_lft forever
+       
+/usr/local/mysql/bin/mysqld --defaults-file=/data/mysql/mysql_3307/my.cnf &      
+mysql -S /tmp/mysql_3307.sock      
+mysqladmin -S /tmp/mysql_3307.sock shutdown
+
+两边分别在keepalived启动的时候 做mysql的启动停止,并用ip addr 观察ip地址的漂移情况
+
+遇到问题查看日志
+tail -50 /var/log/messages 
